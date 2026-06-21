@@ -630,9 +630,9 @@ class ProofOfCredit(gl.Contract):
         for lid in range(end, start - 1, -1):
             loan = self.loans.get(u256(lid))
             if loan is not None and str(loan.status) == "active":
-                d = self._loan_to_json(loan)
-                d["seconds_to_deadline"] = int(loan.deadline) - now
-                results.append(d)
+                loan_json = json.loads(self._loan_to_json(loan))
+                loan_json["seconds_to_deadline"] = int(loan.deadline) - now
+                results.append(json.dumps(loan_json))
 
         return json.dumps({
             "loans": results,

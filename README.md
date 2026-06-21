@@ -41,6 +41,13 @@ proof-of-credit/
 └── docs/media/                   # Walkthrough video
 ```
 
+## Live deployment
+
+- **Frontend**: https://proof-of-credit-five.vercel.app
+- **GitHub**: https://github.com/tommycet/proof-of-credit
+- **Contract**: `0x7Dc0F27237AEe30Fe5909AD8Bd2d9355B64B1F0C` (GenLayer Studionet, chainId 61999)
+- **Walkthrough video**: see `docs/media/poc-walkthrough.mp4` (or in README on GitHub)
+
 ## Quickstart
 
 ```bash
@@ -70,6 +77,30 @@ genlayer call 0xE48AE90997c3060b40678650A668501454feD56a get_application \
 ## Live walkthrough
 
 See `docs/media/poc-walkthrough.mp4` for a complete walkthrough recording (Dashboard → Deposit → Apply → AI Consensus → Credit Score → Draw Loan → Profile).
+
+<video src="docs/media/poc-walkthrough.mp4" controls width="100%"></video>
+
+## End-to-end flow verified on-chain
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│  1. LENDER DEPOSITS GEN INTO POOL                                    │
+│     deposit() — pool_balance increases, total_deposited increments   │
+├──────────────────────────────────────────────────────────────────────┤
+│  2. BORROWER SUBMITS CREDIT PROFILE                                   │
+│     apply_for_credit(...) → 5 LLM validators evaluate in parallel     │
+│     Equivalence Principle consensus → 300-850 score + credit line     │
+├──────────────────────────────────────────────────────────────────────┤
+│  3. BORROWER DRAWS LOAN AGAINST CREDIT LINE                           │
+│     draw_loan(app_id, amount) — pool debits, loan status=active       │
+├──────────────────────────────────────────────────────────────────────┤
+│  4. BORROWER REPAYS                                                    │
+│     repay_loan(loan_id) — principal + interest → pool, score +10     │
+├──────────────────────────────────────────────────────────────────────┤
+│  5. DEFAULT (if past deadline)                                        │
+│     liquidate_defaulted_loan(loan_id) — score -50, public liquidation │
+└──────────────────────────────────────────────────────────────────────┘
+```
 
 ## License
 

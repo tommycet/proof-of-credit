@@ -7,7 +7,7 @@ import { getClient, useDemoAccount } from './genlayer'
 
 export const POC_CONTRACT =
   (import.meta as any).env?.VITE_POC_CONTRACT_ADDRESS ||
-  '0xE48AE90997c3060b40678650A668501454feD56a'
+  '0x7Dc0F27237AEe30Fe5909AD8Bd2d9355B64B1F0C'
 
 export interface CreditApplication {
   id: number
