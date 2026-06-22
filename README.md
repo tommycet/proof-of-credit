@@ -3,7 +3,7 @@
 > Submit a credit profile. Multiple GenLayer validators run LLM evaluation in parallel. Reach consensus on a FICO-like score (300-850). Borrow without collateral.
 
 **Live contracts**:
-- **Bradbury testnet** (chainId 4221): `0x91D47d9Ea6a943a432eECb6F8f2EbC9b0D79FFBC`
+- **Bradbury testnet** (chainId 4221): `0x13BEeb7f356436015Edbfc6121c47a38aff70942`
 - Studionet (chainId 61999, gas-free): `0xE48AE90997c3060b40678650A668501454feD56a`
 
 The frontend is currently pointed at the Bradbury contract. Set `VITE_POC_NETWORK=studionet` to use the gas-free network.
@@ -48,7 +48,7 @@ proof-of-credit/
 
 - **Frontend**: https://proof-of-credit-five.vercel.app (points at Bradbury by default)
 - **GitHub**: https://github.com/tommycet/proof-of-credit
-- **Bradbury contract**: `0x91D47d9Ea6a943a432eECb6F8f2EbC9b0D79FFBC` (chainId 4221)
+- **Bradbury contract**: `0x13BEeb7f356436015Edbfc6121c47a38aff70942` (chainId 4221)
 - **Studionet contract**: `0xE48AE90997c3060b40678650A668501454feD56a` (chainId 61999, gas-free)
 - **Walkthrough video**: see `docs/media/poc-walkthrough.mp4` (or in README on GitHub)
 
