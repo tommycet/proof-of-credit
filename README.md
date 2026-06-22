@@ -2,8 +2,11 @@
 
 > Submit a credit profile. Multiple GenLayer validators run LLM evaluation in parallel. Reach consensus on a FICO-like score (300-850). Borrow without collateral.
 
-**Live contract** (GenLayer Studionet): `0xE48AE90997c3060b40678650A668501454feD56a`
-**Chain**: GenLayer Studionet (chainId 61999)
+**Live contracts**:
+- **Bradbury testnet** (chainId 4221): `0x91D47d9Ea6a943a432eECb6F8f2EbC9b0D79FFBC`
+- Studionet (chainId 61999, gas-free): `0xE48AE90997c3060b40678650A668501454feD56a`
+
+The frontend is currently pointed at the Bradbury contract. Set `VITE_POC_NETWORK=studionet` to use the gas-free network.
 
 ## What this is
 
@@ -43,9 +46,10 @@ proof-of-credit/
 
 ## Live deployment
 
-- **Frontend**: https://proof-of-credit-five.vercel.app
+- **Frontend**: https://proof-of-credit-five.vercel.app (points at Bradbury by default)
 - **GitHub**: https://github.com/tommycet/proof-of-credit
-- **Contract**: `0x7Dc0F27237AEe30Fe5909AD8Bd2d9355B64B1F0C` (GenLayer Studionet, chainId 61999)
+- **Bradbury contract**: `0x91D47d9Ea6a943a432eECb6F8f2EbC9b0D79FFBC` (chainId 4221)
+- **Studionet contract**: `0xE48AE90997c3060b40678650A668501454feD56a` (chainId 61999, gas-free)
 - **Walkthrough video**: see `docs/media/poc-walkthrough.mp4` (or in README on GitHub)
 
 ## Quickstart
@@ -101,6 +105,24 @@ See `docs/media/poc-walkthrough.mp4` for a complete walkthrough recording (Dashb
 │     liquidate_defaulted_loan(loan_id) — score -50, public liquidation │
 └──────────────────────────────────────────────────────────────────────┘
 ```
+
+## Bradbury testnet notes
+
+This contract was originally developed on GenLayer Studionet (chainId 61999, gas-free). It was then deployed to the real **Bradbury testnet** (chainId 4221) where validators must reach consensus on actual GEN-staked transactions.
+
+### What works on Bradbury
+
+- **Contract deploy** — the bytecode deploys cleanly to Bradbury; a contract on-chain receives and stores state
+- **Lender deposits** — `deposit()` accepts value transfers and credits the lender's share (5/5 AGREE on every call)
+- **Credit applications** — `apply_for_credit()` calls `gl.eq_principle.prompt_non_comparative` to run LLM consensus on a borrower's profile. The leader LLM produces a score; validators verify the structural validity of the JSON output
+
+### Known consensus behaviour
+
+On bradbury, the LLM credit-scoring step is **non-deterministic** — different validators running their own LLM calls produce different scores for the same profile. The leader's prompt returns a single value but validators compare against their own, which frequently yields 4–5× `DETERMINISTIC_VIOLATION` votes in a single round. The Equivalence Principle then rotates to a new leader for a fresh round, which may or may not converge within 3 rotations.
+
+The repository ships a `proof_of_credit.py` contract that has been demonstrated end-to-end on the gas-free studionet (with deterministic LLM consensus). The same contract bytecode deploys on bradbury, but the LLM consensus on the credit-application step requires a more deterministic model than what is currently available on the testnet validators.
+
+For deterministic-by-design bradbury demos, the included `scripts/test_draw_v3.mjs` shows a minimal `submit()` + `draw()` flow with full state writes that passes 5/5 AGREE on bradbury with no LLM involvement.
 
 ## License
 

@@ -387,7 +387,9 @@ class ProofOfCredit(gl.Contract):
         # Enforce loan duration bounds — caller picks within range
         # Default 90 days; could be parameterised
         default_duration = 90 * 24 * 3600
-        deadline = int(datetime.now(timezone.utc).timestamp()) + default_duration
+        # Snapshot timestamp once - GenVM may not allow multiple calls in same tx
+        now_ts = int(datetime.now(timezone.utc).timestamp())
+        deadline = now_ts + default_duration
 
         # --- Issue loan ---
         loan_id = int(self.loan_count) + 1
@@ -399,7 +401,7 @@ class ProofOfCredit(gl.Contract):
             interest_rate_bps=u256(int(app.interest_rate_bps)),
             amount_repaid=u256(0),
             deadline=u256(deadline),
-            timestamp=u256(int(datetime.now(timezone.utc).timestamp())),
+            timestamp=u256(now_ts),
             status="active",
         )
         self.loans[u256(loan_id)] = loan
@@ -413,7 +415,7 @@ class ProofOfCredit(gl.Contract):
         profile = self._get_or_create_profile(borrower)
         profile.total_loans = u256(int(profile.total_loans) + 1)
         profile.lifetime_borrowed = u256(int(profile.lifetime_borrowed) + amount)
-        profile.last_updated = u256(int(datetime.now(timezone.utc).timestamp()))
+        profile.last_updated = u256(now_ts)
         self.user_profiles[borrower] = profile
 
         # Note: GEN transfer to borrower is reflected in pool_balance accounting.
