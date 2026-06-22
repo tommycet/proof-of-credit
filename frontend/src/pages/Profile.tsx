@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { formatGEN, useDemoAccount } from '../services/genlayer'
+import { formatGEN } from '../services/genlayer'
+import { useWallet } from '../services/wallet'
 import { getUserProfile } from '../services/contract'
 import type { UserProfile } from '../services/contract'
 import type { Route } from '../App'
@@ -9,23 +10,44 @@ interface Props {
 }
 
 export function Profile({ navigate }: Props) {
-  const account = useDemoAccount()
+  const { wallet } = useWallet()
+  const accountAddress = wallet?.address
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!accountAddress) {
+      setLoading(false)
+      setProfile(null)
+      return
+    }
     let cancelled = false
     const load = async () => {
       setLoading(true)
       try {
-        const p = await getUserProfile(account.address)
+        const p = await getUserProfile(accountAddress)
         if (!cancelled) setProfile(p)
       } finally {
         if (!cancelled) setLoading(false)
       }
     }
     load()
-  }, [account.address])
+  }, [accountAddress])
+
+  if (!accountAddress) {
+    return (
+      <div>
+        <div className="h-page">
+          <div className="h-page-title">Credit Profile</div>
+        </div>
+        <div className="empty">
+          <div className="empty-icon">◇</div>
+          <div className="empty-title">No wallet connected</div>
+          <div className="empty-sub">Connect a wallet from the top-right to view its credit profile.</div>
+        </div>
+      </div>
+    )
+  }
 
   if (loading) {
     return (
@@ -43,10 +65,12 @@ export function Profile({ navigate }: Props) {
       <div>
         <div className="h-page">
           <div className="h-page-title">Credit Profile</div>
+          <div className="lbl" style={{ marginTop: 4 }}>{accountAddress}</div>
         </div>
         <div className="empty">
           <div className="empty-icon">∅</div>
           <div className="empty-title">No profile</div>
+          <div className="empty-sub">This address has not submitted any credit applications yet.</div>
         </div>
       </div>
     )
@@ -62,7 +86,7 @@ export function Profile({ navigate }: Props) {
       <div className="h-page">
         <div>
           <div className="h-page-title">Your Credit Profile</div>
-          <div className="lbl" style={{ marginTop: 4 }}>{account.address}</div>
+          <div className="lbl" style={{ marginTop: 4 }}>{accountAddress}</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn btn-primary" onClick={() => navigate({ name: 'apply' })}>+ Apply for Credit</button>

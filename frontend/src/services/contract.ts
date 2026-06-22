@@ -1,9 +1,15 @@
 /**
  * Typed wrappers around the Proof of Credit contract methods.
  * All read methods return parsed JSON; all write methods return the tx hash.
+ *
+ * Write methods accept an optional `account` (viem Account). If omitted they
+ * fall back to the demo signer (kept for backwards compat — read flows still
+ * work). The wallet-aware UI passes the active wallet's account from
+ * `useWallet().account`.
  */
 
 import { getClient, useDemoAccount } from './genlayer'
+import type { Account, Address } from 'viem'
 
 export const POC_CONTRACT =
   (import.meta as any).env?.VITE_POC_CONTRACT_ADDRESS ||
@@ -203,11 +209,11 @@ export interface ApplyForCreditArgs {
   notes: string
 }
 
-export async function applyForCredit(args: ApplyForCreditArgs): Promise<string> {
-  const account = useDemoAccount()
-  const c = getClient(account.address as `0x${string}`)
+export async function applyForCredit(args: ApplyForCreditArgs, account?: Account): Promise<string> {
+  const acct = account ?? useDemoAccount()
+  const c = getClient(acct.address as Address)
   return (await c.writeContract({
-    account,
+    account: acct,
     address: POC_CONTRACT as `0x${string}`,
     functionName: 'apply_for_credit',
     args: [
@@ -225,11 +231,11 @@ export async function applyForCredit(args: ApplyForCreditArgs): Promise<string> 
   })) as string
 }
 
-export async function depositToPool(): Promise<string> {
-  const account = useDemoAccount()
-  const c = getClient(account.address as `0x${string}`)
+export async function depositToPool(account?: Account): Promise<string> {
+  const acct = account ?? useDemoAccount()
+  const c = getClient(acct.address as Address)
   return (await c.writeContract({
-    account,
+    account: acct,
     address: POC_CONTRACT as `0x${string}`,
     functionName: 'deposit',
     args: [],
@@ -237,22 +243,22 @@ export async function depositToPool(): Promise<string> {
   })) as string
 }
 
-export async function drawLoan(applicationId: number, amount: number): Promise<string> {
-  const account = useDemoAccount()
-  const c = getClient(account.address as `0x${string}`)
+export async function drawLoan(applicationId: number, amount: number, account?: Account): Promise<string> {
+  const acct = account ?? useDemoAccount()
+  const c = getClient(acct.address as Address)
   return (await c.writeContract({
-    account,
+    account: acct,
     address: POC_CONTRACT as `0x${string}`,
     functionName: 'draw_loan',
     args: [BigInt(applicationId), BigInt(amount)],
   })) as string
 }
 
-export async function repayLoan(loanId: number): Promise<string> {
-  const account = useDemoAccount()
-  const c = getClient(account.address as `0x${string}`)
+export async function repayLoan(loanId: number, account?: Account): Promise<string> {
+  const acct = account ?? useDemoAccount()
+  const c = getClient(acct.address as Address)
   return (await c.writeContract({
-    account,
+    account: acct,
     address: POC_CONTRACT as `0x${string}`,
     functionName: 'repay_loan',
     args: [BigInt(loanId)],

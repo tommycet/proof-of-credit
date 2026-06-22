@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
-import { POC_CONTRACT_ADDRESS, POC_NETWORK, useDemoAccount, shortAddr, formatGEN } from './services/genlayer'
+import { POC_CONTRACT_ADDRESS, POC_NETWORK, shortAddr, formatGEN } from './services/genlayer'
+import { WalletProvider, useWallet } from './services/wallet'
+import { WalletButton } from './components/WalletButton'
 import {
   getProtocolStats,
   getRecentApplications,
@@ -40,13 +42,21 @@ export interface ToastMsg {
 }
 
 export default function App() {
+  return (
+    <WalletProvider>
+      <AppInner />
+    </WalletProvider>
+  )
+}
+
+function AppInner() {
+  const { wallet, account } = useWallet()
   const [route, setRoute] = useState<Route>({ name: 'home' })
   const [stats, setStats] = useState<ProtocolStats | null>(null)
   const [apps, setApps] = useState<CreditApplication[]>([])
   const [loans, setLoans] = useState<(Loan & { seconds_to_deadline: number })[]>([])
   const [toast, setToast] = useState<ToastMsg | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
-  const demoAccount = useDemoAccount()
 
   const showToast = useCallback((type: ToastMsg['type'], text: string) => {
     setToast({ id: Date.now(), type, text })
@@ -99,9 +109,17 @@ export default function App() {
 
   const handleApply = useCallback(
     async (args: Parameters<typeof applyForCredit>[0]): Promise<{ ok: true; id: number } | { ok: false; err: string }> => {
+      if (!wallet) {
+        showToast('error', 'Connect a wallet before applying.')
+        return { ok: false, err: 'no_wallet' }
+      }
+      if (wallet.readOnly) {
+        showToast('error', 'Demo wallet cannot sign on bradbury. Connect MetaMask or import a funded key.')
+        return { ok: false, err: 'read_only' }
+      }
       try {
         showToast('info', 'Submitting application to AI consensus...')
-        const txHash = await applyForCredit(args)
+        const txHash = await applyForCredit(args, account ?? undefined)
         showToast('info', 'Application submitted. Waiting for consensus...')
         await waitForTxFinalized(txHash, 240_000)
         // Poll for new application id (counter increments)
@@ -126,13 +144,21 @@ export default function App() {
         return { ok: false, err: msg }
       }
     },
-    [stats, refresh, showToast],
+    [stats, refresh, showToast, wallet],
   )
 
   const handleDeposit = useCallback(async () => {
+    if (!wallet) {
+      showToast('error', 'Connect a wallet before depositing.')
+      return
+    }
+    if (wallet.readOnly) {
+      showToast('error', 'Demo wallet cannot deposit on bradbury.')
+      return
+    }
     try {
       showToast('info', 'Depositing 100 GEN into pool...')
-      const txHash = await depositToPool()
+      const txHash = await depositToPool(account ?? undefined)
       await waitForTxFinalized(txHash, 60_000)
       try {
         const baseline = stats?.pool_balance ?? 0
@@ -148,13 +174,17 @@ export default function App() {
     } catch (err: any) {
       showToast('error', `Deposit failed: ${err?.shortMessage ?? err?.message ?? err}`)
     }
-  }, [stats, refresh, showToast])
+  }, [stats, refresh, showToast, wallet])
 
   const handleDraw = useCallback(
     async (appId: number, amount: number) => {
+      if (!wallet || wallet.readOnly) {
+        showToast('error', 'Connect a funded wallet to draw a loan.')
+        return
+      }
       try {
         showToast('info', `Drawing ${formatGEN(BigInt(amount))} GEN...`)
-        const txHash = await drawLoan(appId, amount)
+        const txHash = await drawLoan(appId, amount, account ?? undefined)
         await waitForTxFinalized(txHash, 60_000)
         try {
           const baseline = stats?.total_loans ?? 0
@@ -171,14 +201,18 @@ export default function App() {
         showToast('error', `Draw failed: ${err?.shortMessage ?? err?.message ?? err}`)
       }
     },
-    [stats, refresh, showToast],
+    [stats, refresh, showToast, wallet],
   )
 
   const handleRepay = useCallback(
     async (loanId: number) => {
+      if (!wallet || wallet.readOnly) {
+        showToast('error', 'Connect a funded wallet to repay.')
+        return
+      }
       try {
         showToast('info', 'Repaying loan...')
-        const txHash = await repayLoan(loanId)
+        const txHash = await repayLoan(loanId, account ?? undefined)
         await waitForTxFinalized(txHash, 60_000)
         showToast('success', 'Loan repaid. Credit history updated.')
         refresh()
@@ -186,7 +220,7 @@ export default function App() {
         showToast('error', `Repay failed: ${err?.shortMessage ?? err?.message ?? err}`)
       }
     },
-    [refresh, showToast],
+    [refresh, showToast, wallet],
   )
 
   // ============================================================
@@ -227,10 +261,7 @@ export default function App() {
             <span className="network-dot" />
             {POC_NETWORK === 'bradbury' ? 'BRADBURY TESTNET · 4221' : 'STUDIONET · 61999'}
           </div>
-          <div className="wallet-pill">
-            <span className="demo">DEMO</span>
-            <span>{shortAddr(demoAccount.address)}</span>
-          </div>
+          <WalletButton />
         </div>
       </header>
 

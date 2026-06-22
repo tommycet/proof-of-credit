@@ -1,4 +1,5 @@
-import { formatGEN, useDemoAccount } from '../services/genlayer'
+import { formatGEN, shortAddr } from '../services/genlayer'
+import { useWallet } from '../services/wallet'
 import type { ProtocolStats } from '../services/contract'
 import type { Route } from '../App'
 
@@ -9,7 +10,7 @@ interface Props {
 }
 
 export function Pool({ stats, onDeposit, navigate }: Props) {
-  const account = useDemoAccount()
+  const { wallet } = useWallet()
   const poolBalance = stats?.pool_balance ?? 0
   const totalDeposited = stats?.total_deposited ?? 0
   const totalBorrowed = stats?.total_borrowed ?? 0
@@ -18,9 +19,11 @@ export function Pool({ stats, onDeposit, navigate }: Props) {
   const totalInterest = stats?.total_interest_collected ?? 0
   const totalRepaid = stats?.total_repaid ?? 0
 
-  // Simulated lender share for demo account (deterministic based on deposit count)
-  // The demo key always deposits 100 GEN; if total deposited is dominated by it, share ≈ 100%
-  const simulatedSharePct = totalDeposited > 0 ? Math.min(100, 100 * 10 ** 18 / totalDeposited * 100) : 0
+  // Simulated lender share is only meaningful for the demo wallet (which has a
+  // known 100 GEN deposit). For other wallets we leave the per-lender
+  // breakdown blank — the on-chain `LenderPosition` view would be added here.
+  const showSimulated = wallet?.kind === 'demo'
+  const simulatedSharePct = showSimulated && totalDeposited > 0 ? Math.min(100, 100 * 10 ** 18 / totalDeposited * 100) : 0
   const simulatedShare = simulatedSharePct
   const simulatedYield = totalInterest * simulatedSharePct / 100
 
@@ -82,9 +85,15 @@ export function Pool({ stats, onDeposit, navigate }: Props) {
           <div className="divider" />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontFamily: 'var(--font-data)', fontSize: 11 }}>
             <Row label="Min Reserve Ratio" value={`${reserveRatio / 100}%`} />
-            <Row label="Your Position" value={formatGEN(BigInt(0)) + ' GEN (demo)'} />
-            <Row label="Pool Share" value={`${simulatedShare.toFixed(2)}%`} />
-            <Row label="Cumulative Yield" value={formatGEN(BigInt(Math.floor(simulatedYield))) + ' GEN'} />
+            {showSimulated ? (
+              <>
+                <Row label="Your Position" value={formatGEN(BigInt(0)) + ' GEN (demo)'} />
+                <Row label="Pool Share" value={`${simulatedShare.toFixed(2)}%`} />
+                <Row label="Cumulative Yield" value={formatGEN(BigInt(Math.floor(simulatedYield))) + ' GEN'} />
+              </>
+            ) : (
+              <Row label="Your Position" value={wallet ? `${shortAddr(wallet.address)} — connect & deposit to view` : '—'} />
+            )}
           </div>
         </div>
 
