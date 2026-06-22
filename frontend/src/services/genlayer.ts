@@ -1,19 +1,26 @@
 /**
  * GenLayer client + wallet integration.
  *
- * Uses the built-in chains.studionet constant which ships with consensusMainContract
- * and validator count fields pre-populated (avoids the custom-chain BigInt bug).
+ * Network is controlled by VITE_POC_NETWORK (studionet | bradbury). Defaults to
+ * studionet for local demos. bradbury is the real testnet (chainId 4221).
  */
 
 import { createClient, createAccount, chains } from 'genlayer-js'
 import { privateKeyToAccount, generatePrivateKey } from 'viem/accounts'
 
-// Contract address deployed to studionet
+// Contract address — overridable via env, defaults to the most recent deploy
 export const POC_CONTRACT_ADDRESS =
   (import.meta as any).env?.VITE_POC_CONTRACT_ADDRESS ||
   '0x7Dc0F27237AEe30Fe5909AD8Bd2d9355B64B1F0C'
 
-export const POC_CHAIN = chains.studionet
+// Network selection
+const NETWORK = ((import.meta as any).env?.VITE_POC_NETWORK || 'studionet').toLowerCase()
+export const POC_NETWORK = NETWORK
+export const POC_CHAIN = NETWORK === 'bradbury' ? chains.testnetBradbury : chains.studionet
+export const POC_RPC =
+  NETWORK === 'bradbury'
+    ? 'https://rpc-bradbury.genlayer.com'
+    : 'https://rpcstudionet.genlayer.com'
 
 // Fixed demo signer key — same as the well-known lore demo key.
 // On studionet this works without a balance because the chain is gas-free.

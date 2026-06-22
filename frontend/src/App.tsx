@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { POC_CONTRACT_ADDRESS, useDemoAccount, shortAddr, formatGEN } from './services/genlayer'
+import { POC_CONTRACT_ADDRESS, POC_NETWORK, useDemoAccount, shortAddr, formatGEN } from './services/genlayer'
 import {
   getProtocolStats,
   getRecentApplications,
@@ -225,7 +225,7 @@ export default function App() {
         <div className="topbar-right">
           <div className="network-badge">
             <span className="network-dot" />
-            STUDIONET · 61999
+            {POC_NETWORK === 'bradbury' ? 'BRADBURY TESTNET · 4221' : 'STUDIONET · 61999'}
           </div>
           <div className="wallet-pill">
             <span className="demo">DEMO</span>
@@ -265,7 +265,7 @@ export default function App() {
       </div>
 
       <footer className="footer">
-        <div>PROOF OF CREDIT · {POC_CONTRACT_ADDRESS.slice(0, 6)}…{POC_CONTRACT_ADDRESS.slice(-4)} · STUDIONET</div>
+        <div>PROOF OF CREDIT · {POC_CONTRACT_ADDRESS.slice(0, 6)}…{POC_CONTRACT_ADDRESS.slice(-4)} · {POC_NETWORK === 'bradbury' ? 'BRADBURY' : 'STUDIONET'}</div>
         <div className="footer-links">
           <a href="https://docs.genlayer.com" target="_blank" rel="noopener noreferrer">GENLAYER DOCS</a>
           <a href={`https://genlayer-explorer.vercel.app/address/${POC_CONTRACT_ADDRESS}`} target="_blank" rel="noopener noreferrer">EXPLORER</a>

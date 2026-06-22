@@ -149,7 +149,7 @@ class ProofOfCredit(gl.Contract):
 
     # ---- Lender state ----
     lender_deposits: TreeMap[str, u256]
-    lender_deposit_share: TreeMap[str, u256]    # basis-points share of pool
+
 
     def __init__(self):
         # Init only scalar storage. TreeMap and dataclass fields are
